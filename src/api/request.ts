@@ -1,7 +1,6 @@
-import axios, { AxiosRequestConfig } from 'axios'
+import axios, { AxiosRequestConfig, AxiosError } from 'axios'
 import { message } from 'antd'
 import Loading from '../utils/_loading'
-;(window as any).Loading = Loading
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
@@ -65,6 +64,13 @@ export default function request(config: RequestConfig | string): Promise<any> {
     })
 }
 
-export function getErrMsg(err: Error, fallback = '请求异常') {
-  return err.message || fallback
+function axiosErrMsg(err: AxiosError): string | undefined {
+  return err.response?.data?.message
+}
+
+export function getErrMsg(
+  err: Error,
+  fallback = '系统开小差了，请稍候再试'
+): string {
+  return axiosErrMsg(err as AxiosError) || err.message || fallback
 }
