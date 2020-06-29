@@ -37,6 +37,7 @@ module.exports = {
         new MockService(app, {
           main: resolve('mock/index.js'),
           watchPaths: resolve('mock'),
+          baseUrl: process.env.REACT_APP_BASE_API,
         })
       }
       return config

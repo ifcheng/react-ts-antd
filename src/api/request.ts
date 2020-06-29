@@ -8,7 +8,7 @@ import Loading from '../utils/_loading'
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
 const config: AxiosRequestConfig = {
-  baseURL: process.env.baseURL,
+  baseURL: process.env.REACT_APP_BASE_API,
   timeout: 10 * 1000, // Timeout
   // withCredentials: true, // Check cross-site Access-Control
 }
