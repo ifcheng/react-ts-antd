@@ -1,6 +1,7 @@
 import React from 'react'
-import { BrowserRouter, Switch } from 'react-router-dom'
+import { Router, Switch } from 'react-router-dom'
 import { GuardProvider, GuardedRoute, GuardFunction } from 'react-router-guards'
+import history from './utils/_history'
 import Loading from './components/loading'
 import Home from './views/home'
 import Login from './views/login'
@@ -13,11 +14,11 @@ function App() {
       ? next()
       : next.redirect({
           pathname: '/login',
-          state: { redirect: to.location.pathname },
+          state: { from: to.location.pathname },
         })
   }
   return (
-    <BrowserRouter>
+    <Router history={history}>
       <Loading />
       <GuardProvider guards={[guard]}>
         <Switch>
@@ -25,7 +26,7 @@ function App() {
           <GuardedRoute path="/login" component={Login}></GuardedRoute>
         </Switch>
       </GuardProvider>
-    </BrowserRouter>
+    </Router>
   )
 }
 

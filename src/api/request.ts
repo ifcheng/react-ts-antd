@@ -1,6 +1,8 @@
 import axios, { AxiosRequestConfig, AxiosError } from 'axios'
 import { message } from 'antd'
 import Loading from '../utils/_loading'
+import history from '../utils/_history'
+import * as auth from '../utils/_auth'
 
 // Full config:  https://github.com/axios/axios#request-config
 // axios.defaults.baseURL = process.env.baseURL || process.env.apiUrl || '';
@@ -18,6 +20,8 @@ const _axios = axios.create(config)
 _axios.interceptors.request.use(
   function (config) {
     // Do something before request is sent
+    const token = auth.getToken()
+    token && (config.headers.token = token)
     return config
   },
   function (error) {
@@ -34,6 +38,14 @@ _axios.interceptors.response.use(
   },
   function (error) {
     // Do something with response error
+    if (error.response.status === 401) {
+      auth.clear()
+      history.replace({
+        pathname: '/login',
+        state: { from: history.location.pathname },
+      })
+      return new Promise(() => {})
+    }
     return Promise.reject(error)
   }
 )

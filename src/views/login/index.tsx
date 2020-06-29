@@ -7,7 +7,7 @@ const Login: React.FC<RouteComponentProps> = function ({ history, location }) {
   const dispatch = useDispatch()
   const submit = async () => {
     await dispatch(login({ userName: 'admin' }))
-    history.push((location.state as any)?.redirect || '/')
+    history.push((location.state as any)?.from || '/')
   }
   return <button onClick={submit}>login</button>
 }
