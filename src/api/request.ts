@@ -62,7 +62,7 @@ _axios.interceptors.response.use(
       auth.clear()
       history.replace({
         pathname: '/login',
-        state: { from: history.location.pathname },
+        state: { from: history.location },
       })
       return new Promise(() => {})
     }

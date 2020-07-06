@@ -14,7 +14,7 @@ function App() {
       ? next()
       : next.redirect({
           pathname: '/login',
-          state: { from: to.location.pathname },
+          state: { from: to.location },
         })
   }
   return (
