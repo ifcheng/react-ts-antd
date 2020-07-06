@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
 import { message } from 'antd'
 import Loading from '../utils/_loading'
 import history from '../utils/_history'
@@ -9,9 +9,25 @@ import * as auth from '../utils/_auth'
 // axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
-const config: AxiosRequestConfig = {
+/** 错误等级：0 silent; 1 message.warn; 2 message.error */
+type ErrorLevel = 0 | 1 | 2
+
+interface RequestConfig extends AxiosRequestConfig {
+  /** 是否显示加载指示器 */
+  loader?: boolean | string
+  /** 错误消息 */
+  errorMessage?: string
+  /** 错误等级：0 silent; 1 message.warn; 2 message.error */
+  errorLevel?: ErrorLevel
+  /** 是否返回响应头信息 */
+  getResponseHeaders?: boolean
+}
+
+const config: RequestConfig = {
   baseURL: process.env.REACT_APP_BASE_API,
-  timeout: 10 * 1000, // Timeout
+  errorLevel: 2,
+  errorMessage: '系统开小差了，请稍候再试',
+  // timeout: 10 * 1000, // Timeout
   // withCredentials: true, // Check cross-site Access-Control
 }
 
@@ -20,6 +36,7 @@ const _axios = axios.create(config)
 _axios.interceptors.request.use(
   function (config) {
     // Do something before request is sent
+    console.log(config)
     const token = auth.getToken()
     token && (config.headers.token = token)
     return config
@@ -34,11 +51,14 @@ _axios.interceptors.request.use(
 _axios.interceptors.response.use(
   function (response) {
     // Do something with response data
-    return response.data
+    const { data, headers, config } = response
+    return (config as RequestConfig).getResponseHeaders
+      ? { data, headers }
+      : data
   },
   function (error) {
     // Do something with response error
-    if (error.response.status === 401) {
+    if (error.response?.status === 401) {
       auth.clear()
       history.replace({
         pathname: '/login',
@@ -46,43 +66,39 @@ _axios.interceptors.response.use(
       })
       return new Promise(() => {})
     }
-    return Promise.reject(error)
+    return Promise.reject(
+      new Error(error.response?.data?.message || error.config.errorMessage)
+    )
   }
 )
 
-export interface RequestConfig extends AxiosRequestConfig {
-  loading?: boolean
-  loadingText?: string
-  errMsg?: false | string
-}
-
-export default function request(config: RequestConfig | string): Promise<any> {
-  if (typeof config === 'string') {
-    config = { url: config }
-  }
-  const { loading, loadingText, errMsg } = config
-  loading && Loading.show(loadingText)
+export default function request(config: string | RequestConfig): Promise<any> {
+  if (typeof config === 'string') config = { url: config }
+  const { loader, errorLevel = 2, transformRequest, transformResponse } = config
+  config.transformRequest = [
+    ...axios.defaults.transformRequest,
+    ...transformRequest,
+  ]
+  config.transformResponse = [
+    ...axios.defaults.transformResponse,
+    ...transformResponse,
+  ]
+  const loadingText = typeof loader === 'string' ? loader : undefined
+  loader && Loading.show(loadingText)
   return _axios(config)
     .then(data => {
-      loading && Loading.close()
+      loader && Loading.close()
       return data
     })
     .catch(err => {
       Loading.close()
-      if (errMsg !== false) {
-        message.error(getErrMsg(err, errMsg))
-      }
+      reportError(err, errorLevel)
       return Promise.reject(err)
     })
 }
 
-function axiosErrMsg(err: AxiosError): string | undefined {
-  return err.response?.data?.message
-}
-
-export function getErrMsg(
-  err: Error,
-  fallback = '系统开小差了，请稍候再试'
-): string {
-  return axiosErrMsg(err as AxiosError) || err.message || fallback
+function reportError(err: Error, level: ErrorLevel): void {
+  if (level === 0) return
+  const type = level === 2 ? 'error' : 'warn'
+  message[type](err.message)
 }
