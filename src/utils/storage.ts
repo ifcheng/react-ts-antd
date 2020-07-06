@@ -42,7 +42,7 @@ class SmartStorage {
     try {
       const { value, expires } = JSON.parse(res as string) as Ref
       if (expires && new Date(expires).getTime() <= Date.now()) {
-        this.remove(key)
+        this.native.removeItem(key)
         res = null
       } else {
         res = value
@@ -51,7 +51,6 @@ class SmartStorage {
     return res as any
   }
   set(key: string, value: any, expires?: Expires): void {
-    expires = this.native === localStorage ? expires : void 0
     this.native.setItem(key, JSON.stringify(ref(value, expires)))
   }
   remove(key: string | string[]): void {
