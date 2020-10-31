@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios'
-import { message } from 'antd'
+import { message as Message } from 'antd'
 import Loading from '../utils/_loading'
 import history from '../utils/_history'
 import * as auth from '../utils/_auth'
@@ -14,29 +14,21 @@ type ErrorLevel = 0 | 1 | 2
 
 interface RequestConfig extends AxiosRequestConfig {
   /** 是否显示加载指示器 */
-  loader?: boolean | string
+  indicator?: boolean | string
   /** 错误消息 */
   errorMessage?: string
   /** 错误等级：0 silent; 1 message.warn; 2 message.error */
   errorLevel?: ErrorLevel
-  /** 是否返回响应头信息 */
-  getResponseHeaders?: boolean
 }
 
-const config: RequestConfig = {
+const _axios = axios.create({
   baseURL: process.env.REACT_APP_BASE_API,
-  errorLevel: 2,
-  errorMessage: '系统开小差了，请稍候再试',
-  // timeout: 10 * 1000, // Timeout
-  // withCredentials: true, // Check cross-site Access-Control
-}
-
-const _axios = axios.create(config)
+  method: 'POST',
+})
 
 _axios.interceptors.request.use(
   function (config) {
     // Do something before request is sent
-    console.log(config)
     const token = auth.getToken()
     token && (config.headers.token = token)
     return config
@@ -51,54 +43,86 @@ _axios.interceptors.request.use(
 _axios.interceptors.response.use(
   function (response) {
     // Do something with response data
-    const { data, headers, config } = response
-    return (config as RequestConfig).getResponseHeaders
-      ? { data, headers }
-      : data
+    const data = response.data
+    if (!data || data instanceof Blob) return data
+    if (data.code === '000') return data.data || data
+    if (data.code === '998') {
+      if (auth.getToken()) {
+        // store.dispatch('user/clean')
+        history.replace({
+          pathname: '/login',
+          state: {
+            redirect: history.location,
+          },
+        })
+        Message.warning('您已被登出，请重新登录')
+      }
+      return new Promise(() => {})
+    }
+    const error = new Error(data.message)
+    ;(error as any).report = true
+    return Promise.reject(error)
   },
   function (error) {
     // Do something with response error
-    if (error.response?.status === 401) {
-      auth.clear()
-      history.replace({
-        pathname: '/login',
-        state: { from: history.location },
-      })
-      return new Promise(() => {})
-    }
-    return Promise.reject(
-      new Error(error.response?.data?.message || error.config.errorMessage)
-    )
+    if (axios.isCancel(error)) error.report = false
+    return Promise.reject(error)
   }
 )
 
-export default function request(config: string | RequestConfig): Promise<any> {
-  if (typeof config === 'string') config = { url: config }
-  const { loader, errorLevel = 2, transformRequest, transformResponse } = config
-  config.transformRequest = [
-    ...axios.defaults.transformRequest,
-    ...transformRequest,
-  ]
-  config.transformResponse = [
-    ...axios.defaults.transformResponse,
-    ...transformResponse,
-  ]
-  const loadingText = typeof loader === 'string' ? loader : undefined
-  loader && Loading.show(loadingText)
+/**
+ * 报告错误消息
+ */
+export function reportError(
+  err: Error,
+  level: ErrorLevel,
+  fallback = '系统开小差了，请稍候再试'
+) {
+  if (level === 0 || (err as any).report === false) return
+  const type = level === 2 ? 'error' : 'warning'
+  const message = (err as any).report && err.message
+  Message[type](message || fallback)
+}
+
+/**
+ * axios封装
+ * @param config 配置对象或请求url
+ * @param data 请求数据，仅用于`POST` `PUT` `PATCH`方法
+ * @param interceptor 拦截器，用于修改配置对象
+ */
+export default function request(
+  config: string | RequestConfig,
+  data?: any,
+  interceptor?: (config: RequestConfig) => void | RequestConfig
+): Promise<any> {
+  if (typeof config === 'string') config = { url: config, data }
+  if (typeof interceptor === 'function') {
+    config = interceptor(config) || config
+  }
+  config.transformRequest = ([] as any[]).concat(
+    config.transformRequest || [],
+    axios.defaults.transformRequest
+  )
+
+  // 解构属性为自定义扩展属性
+  const { indicator, errorMessage, errorLevel = 2 } = config
+  const loadingText = typeof indicator === 'string' ? indicator : undefined
+  indicator && Loading.show(loadingText)
+
   return _axios(config)
     .then(data => {
-      loader && Loading.close()
+      indicator && Loading.close()
       return data
     })
     .catch(err => {
       Loading.close()
-      reportError(err, errorLevel)
+      reportError(err, errorLevel, errorMessage)
       return Promise.reject(err)
     })
 }
 
-function reportError(err: Error, level: ErrorLevel): void {
-  if (level === 0) return
-  const type = level === 2 ? 'error' : 'warn'
-  message[type](err.message)
+request.submit = function submit(config: string | RequestConfig, data?: any) {
+  return request(config, data, (config: RequestConfig) => {
+    config.indicator = true
+  })
 }
