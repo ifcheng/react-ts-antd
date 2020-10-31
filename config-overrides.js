@@ -35,9 +35,10 @@ module.exports = {
       config.before = function (app, server) {
         before(app, server)
         new MockService(app, {
-          main: resolve('mock/index.js'),
-          watchPaths: resolve('mock'),
           baseUrl: process.env.REACT_APP_BASE_API,
+          filter(filepath) {
+            return !path.basename(filepath).startsWith('_')
+          },
         })
       }
       return config
