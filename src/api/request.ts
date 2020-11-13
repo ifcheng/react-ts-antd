@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios'
 import { message as Message } from 'antd'
 import Loading from '../utils/_loading'
-import history from '../utils/_history'
+import history from '../router/history'
 import * as auth from '../utils/_auth'
 
 // Full config:  https://github.com/axios/axios#request-config
@@ -122,7 +122,7 @@ export default function request(
 }
 
 request.submit = function submit(config: string | RequestConfig, data?: any) {
-  return request(config, data, (config: RequestConfig) => {
+  return request(config, data, config => {
     config.indicator = true
   })
 }

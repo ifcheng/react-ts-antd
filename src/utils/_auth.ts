@@ -1,14 +1,15 @@
 import { local } from './storage'
+import { UserState } from 'models/user/state'
 
 const TOKEN_KEY = 'access_token'
 const USER_KEY = 'user'
 
 export function getToken() {
-  return local.get<Token>(TOKEN_KEY)
+  return local.get<string>(TOKEN_KEY)
 }
 
-export function setToken(token: Token) {
-  local.set(TOKEN_KEY, token)
+export function setToken(token: string) {
+  local.set(TOKEN_KEY, token, '12h')
 }
 
 export function removeToken() {
@@ -16,10 +17,10 @@ export function removeToken() {
 }
 
 export function getUserInfo() {
-  return local.get<User>(USER_KEY)
+  return local.get<UserState>(USER_KEY)
 }
 
-export function setUserInfo(user: User) {
+export function setUserInfo(user: UserState) {
   local.set(USER_KEY, user)
 }
 

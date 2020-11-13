@@ -1,6 +1,6 @@
 import React from 'react'
 import { RouteComponentProps } from 'react-router'
-import { login } from 'models/login'
+import { login } from '@/store/modules/user'
 import { useDispatch } from '@/hooks/redux'
 
 const Login: React.FC<RouteComponentProps> = function ({ history, location }) {

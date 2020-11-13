@@ -1,31 +1,23 @@
 import React from 'react'
-import { Router, Switch } from 'react-router-dom'
-import { GuardProvider, GuardedRoute, GuardFunction } from 'react-router-guards'
-import history from './utils/_history'
+import { Router, Switch, Route } from 'react-router-dom'
+import history from './router/history'
 import Loading from './components/loading'
-import Home from './views/home'
 import Login from './views/login'
-import { getToken } from './utils/_auth'
+import Layout from '@/layout'
+import { FancyRoute } from './router'
 
 function App() {
   console.log('APP rendering...')
-  const guard: GuardFunction = (to, from, next) => {
-    to.location.pathname === '/login' || getToken()
-      ? next()
-      : next.redirect({
-          pathname: '/login',
-          state: { from: to.location },
-        })
-  }
   return (
     <Router history={history}>
       <Loading />
-      <GuardProvider guards={[guard]}>
-        <Switch>
-          <GuardedRoute path="/" exact component={Home}></GuardedRoute>
-          <GuardedRoute path="/login" component={Login}></GuardedRoute>
-        </Switch>
-      </GuardProvider>
+      <Switch>
+        <Route path="/login" component={Login} />
+        {}
+        <Route>
+          <h2>Not Found</h2>
+        </Route>
+      </Switch>
     </Router>
   )
 }

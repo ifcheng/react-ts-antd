@@ -19,7 +19,7 @@ module.exports = {
     }),
     addLessLoader({
       lessOptions: {
-        modifyVars: resolve('package.json').theme,
+        modifyVars: require(resolve('package.json')).theme,
         javascriptEnabled: true,
       },
     }),
