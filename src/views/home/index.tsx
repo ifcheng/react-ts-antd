@@ -7,7 +7,7 @@ const Home: React.FC<RouteComponentProps> = ({ history }) => {
   console.log('Home rendering...')
   const dispatch = useDispatch()
   const logout = () => {
-    dispatch({ type: 'resetLoginState' })
+    dispatch({ type: 'resetUserState' })
     history.push('/login')
   }
   return (

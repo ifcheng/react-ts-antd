@@ -9,4 +9,5 @@ export interface RouteConfig {
   icon?: string
   breadcrumb?: string | boolean
   authorities?: string[]
+  accessControl?: boolean
 }

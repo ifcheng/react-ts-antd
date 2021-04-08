@@ -1,12 +1,14 @@
 module.exports = {
-  'POST /login': {
+  'POST /coms/login': {
     response: {
-      token: 'test_token',
-      user: {
-        id: '1',
-        name: 'admin',
-        role: 'admin',
-      },
+      code: '000',
+      token: '123',
+    },
+  },
+  'POST /coms/admin/sys/user/findUserInfo': {
+    response: {
+      code: '000',
+      data: {},
     },
   },
 }

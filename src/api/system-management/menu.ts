@@ -21,9 +21,12 @@ export function fetchMenusWithoutAuthority(data: any) {
 }
 
 // 查询当前用户菜单树
-export function fetchCurrentUserMenus(): Promise<RouteConfig[]> {
+export async function fetchCurrentUserMenus(): Promise<RouteConfig[]> {
+  await new Promise(resolve => setTimeout(resolve, 3000))
   return process.env.NODE_ENV === 'development'
-    ? Promise.resolve(batchImport(require.context('@/router/routes', false)))
+    ? Promise.resolve(
+        batchImport(require.context('@/router/routes', false, /\.ts$/))
+      )
     : request(context + '/currentUserMenu')
 }
 

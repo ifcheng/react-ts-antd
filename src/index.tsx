@@ -5,14 +5,27 @@ import store from './store'
 import App from './App'
 import * as serviceWorker from './serviceWorker'
 
-ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </React.StrictMode>,
-  document.getElementById('root')
-)
+async function setup() {
+  if (process.env.NODE_ENV === 'development') {
+    const { default: whyDidYouRender } = await import(
+      /* webpackChunkName: wdyr */ '@welldone-software/why-did-you-render'
+    )
+    whyDidYouRender(React, {
+      trackAllPureComponents: true,
+    })
+  }
+
+  ReactDOM.render(
+    <React.StrictMode>
+      <Provider store={store}>
+        <App />
+      </Provider>
+    </React.StrictMode>,
+    document.getElementById('root')
+  )
+}
+
+setup()
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

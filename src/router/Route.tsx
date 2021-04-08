@@ -1,7 +1,8 @@
 import React, { useContext, useMemo } from 'react'
-import { Route, Redirect } from 'react-router-dom'
+import { Route, Redirect, matchPath } from 'react-router-dom'
 import { RouteConfig } from './types'
 import { AuthorityContext } from './context'
+import { getToken } from '@/utils/_auth'
 
 const FancyRoute: React.FC<RouteConfig> = route => {
   const authorities = useContext(AuthorityContext)
@@ -14,12 +15,24 @@ const FancyRoute: React.FC<RouteConfig> = route => {
       path={route.path}
       exact={route.exact}
       render={props => {
-        const { redirect, component, routes = [] } = route
-        if (redirect && redirect !== props.match.url) {
+        const { accessControl = true, redirect, component, routes = [] } = route
+
+        if (accessControl && !getToken()) {
+          return (
+            <Redirect
+              to={{ pathname: '/login', state: { redirect: props.location } }}
+            />
+          )
+        }
+        if (
+          redirect &&
+          matchPath(props.location.pathname, { path: route.path, exact: true })
+        ) {
           return <Redirect to={redirect} />
         }
         if (!component) return null
-        const Component = React.lazy(() => import(component))
+
+        const Component = React.lazy(() => import('@/' + component))
         return (
           <AuthorityContext.Provider value={_authorities}>
             <Component {...props}>

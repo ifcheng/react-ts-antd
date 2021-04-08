@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { castDraft } from 'immer'
 import { useSelector, useDispatch } from '@/hooks/redux'
 import { generateRoutes } from 'models/app'
 
@@ -10,5 +11,5 @@ export default function useRoutes() {
       dispatch(generateRoutes())
     }
   })
-  return routes
+  return castDraft(routes)
 }

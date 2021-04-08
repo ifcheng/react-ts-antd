@@ -16,19 +16,20 @@ const defaultProps = {
 
 const SideMenuItem = withDefaultProps<Props, DefaultProps>(
   defaultProps,
-  ({ route }) => {
+  /*  此处将rest传递给Item和SubMenu是必须的，不然会报异常 */
+  ({ route, isNest, ...rest }) => {
     if (route.hidden) return null
 
     if ((route.routes || []).every(item => item.hidden)) {
       return (
-        <Menu.Item key={route.path}>
+        <Menu.Item key={route.path} {...rest}>
           <Link to={route.path}>{route.title}</Link>
         </Menu.Item>
       )
     }
 
     return (
-      <Menu.SubMenu title={route.title} key={route.path}>
+      <Menu.SubMenu {...rest} title={route.title} key={route.path}>
         {route.routes!.map(item => (
           <SideMenuItem key={item.path} route={item} isNest />
         ))}
